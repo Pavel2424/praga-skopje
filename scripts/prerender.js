@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 
 async function prerender() {
-  const serverModule = await import("./dist/server/index.mjs");
+  const serverModule = await import(new URL("../dist/server/index.mjs", import.meta.url).href);
   const server = serverModule.default || serverModule;
 
   const request = new Request("http://localhost/");
