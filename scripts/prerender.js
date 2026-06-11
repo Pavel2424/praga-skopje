@@ -5,7 +5,7 @@ async function prerender() {
   const server = serverModule.default || serverModule;
 
   const request = new Request("http://localhost/");
-  const response = await server.fetch(request, {}, { context: { waitUntil: () => {} } });
+  const response = await server.fetch(request, {}, { waitUntil: () => {} });
   const html = await response.text();
 
   writeFileSync("./dist/client/index.html", html);
