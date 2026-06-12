@@ -349,3 +349,175 @@ function Home() {
     </div>
   );
 }
+
+function CatalogSection() {
+  const { items, save } = useUserProducts();
+  const [active, setActive] = useState<Category | "Сите">("Сите");
+  const [title, setTitle] = useState("");
+  const [cat, setCat] = useState<Category>("Алуминиум");
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+
+  const all = [
+    ...catalogPages.map((p) => ({ ...p, id: `c-${p.url}`, builtin: true })),
+    ...items.map((i) => ({ ...i, builtin: false })),
+  ];
+  const filtered = active === "Сите" ? all : all.filter((p) => p.category === active);
+
+  async function handleFile(file: File) {
+    setBusy(true);
+    try {
+      const dataUrl = await resizeImage(file, 1400);
+      const next: UserItem = {
+        id: crypto.randomUUID(),
+        url: dataUrl,
+        title: title.trim() || file.name.replace(/\.[^.]+$/, ""),
+        category: cat,
+      };
+      save([next, ...items]);
+      setTitle("");
+      if (fileRef.current) fileRef.current.value = "";
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function remove(id: string) {
+    save(items.filter((i) => i.id !== id));
+  }
+
+  return (
+    <section id="catalog" className="border-t border-border bg-muted/40">
+      <div className="mx-auto max-w-7xl px-4 py-20">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-primary">Каталог</p>
+            <h2 className="mt-2 text-4xl font-bold md:text-5xl">Целосен каталог на производи</h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              Прелистајте ги нашите страници по категорија. Кликнете на слика за зголемен преглед.
+            </p>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="mb-8 flex flex-wrap gap-2">
+          {(["Сите", ...CATEGORIES] as const).map((c) => (
+            <button
+              key={c}
+              onClick={() => setActive(c)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
+                active === c
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card hover:border-primary"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((p) => (
+            <div key={p.id} className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
+              <button onClick={() => setLightbox(p.url)} className="block w-full">
+                <div className="aspect-[3/4] overflow-hidden bg-muted">
+                  <img src={p.url} alt={p.title} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-105" />
+                </div>
+              </button>
+              <div className="flex items-center justify-between gap-3 p-4">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-bold">{p.title}</div>
+                  <div className="text-xs uppercase tracking-wider text-primary">{p.category}</div>
+                </div>
+                {!p.builtin && (
+                  <button onClick={() => remove(p.id)} aria-label="Избриши" className="rounded-md border border-border p-2 text-muted-foreground hover:border-destructive hover:text-destructive">
+                    <Trash2 className="size-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Admin upload */}
+        <div className="mt-12 rounded-2xl border-2 border-dashed border-border bg-card p-6 md:p-8">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Upload className="size-5" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">Додај нова слика во каталогот</h3>
+              <p className="text-sm text-muted-foreground">Сликите се чуваат локално во овој прелистувач.</p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-3 md:grid-cols-[1fr_220px_auto]">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Име на производ (опционално)"
+              className="rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+            />
+            <select
+              value={cat}
+              onChange={(e) => setCat(e.target.value as Category)}
+              className="rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+            >
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <label className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition hover:brightness-95 ${busy ? "opacity-60" : ""}`}>
+              <Upload className="size-4" />
+              {busy ? "Се обработува…" : "Избери слика"}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFile(f);
+                }}
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+          <button aria-label="Затвори" className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
+            <X className="size-6" />
+          </button>
+          <img src={lightbox} alt="" className="max-h-[92vh] max-w-[96vw] rounded-lg object-contain" />
+        </div>
+      )}
+    </section>
+  );
+}
+
+async function resizeImage(file: File, maxSide: number): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = dataUrl;
+  });
+  const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
