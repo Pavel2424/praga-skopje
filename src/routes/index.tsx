@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowRight, Package, Truck, ShieldCheck, Phone, Mail, MapPin, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Package, Truck, ShieldCheck, Phone, Mail, MapPin, Menu, X, Upload, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import heroImg from "@/assets/hero-products.jpg";
 import logo from "@/assets/logo.png";
 import catAluminum from "@/assets/cat-aluminum.jpg";
@@ -9,6 +9,47 @@ import catPaper from "@/assets/cat-paper.jpg";
 import catCleaning from "@/assets/cat-cleaning.jpg";
 import catBags from "@/assets/cat-bags.jpg";
 import catNapkins from "@/assets/cat-napkins.jpg";
+import cat0 from "@/assets/catalog/catalog-0.jpg.asset.json";
+import cat1 from "@/assets/catalog/catalog-1.jpg.asset.json";
+import cat2 from "@/assets/catalog/catalog-2.jpg.asset.json";
+import cat3 from "@/assets/catalog/catalog-3.jpg.asset.json";
+import cat4 from "@/assets/catalog/catalog-4.jpg.asset.json";
+import cat5 from "@/assets/catalog/catalog-5.jpg.asset.json";
+import cat6 from "@/assets/catalog/catalog-6.jpg.asset.json";
+import cat10 from "@/assets/catalog/catalog-10.jpg.asset.json";
+import cat11 from "@/assets/catalog/catalog-11.jpg.asset.json";
+
+const CATEGORIES = ["Алуминиум", "Пластика", "Хартија", "Стиропор", "Хигиена", "Друго"] as const;
+type Category = typeof CATEGORIES[number];
+
+const catalogPages: { url: string; title: string; category: Category }[] = [
+  { url: cat10.url, title: "Алуминиумски садови и фолија", category: "Алуминиум" },
+  { url: cat5.url, title: "Пластична амбалажа", category: "Пластика" },
+  { url: cat6.url, title: "Пластични чаши и кутии", category: "Пластика" },
+  { url: cat1.url, title: "Хартија и производи од хартија", category: "Хартија" },
+  { url: cat2.url, title: "Чаши за кафе, фискални ролни", category: "Хартија" },
+  { url: cat3.url, title: "Стиропорна амбалажа", category: "Стиропор" },
+  { url: cat4.url, title: "Стиропорни модели MB / XB / PAL", category: "Стиропор" },
+  { url: cat11.url, title: "Диспанзери и хемиски средства", category: "Хигиена" },
+  { url: cat0.url, title: "ПРАГА — преглед на асортиман", category: "Друго" },
+];
+
+type UserItem = { id: string; url: string; title: string; category: Category };
+
+function useUserProducts() {
+  const [items, setItems] = useState<UserItem[]>([]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("praga.userProducts");
+      if (raw) setItems(JSON.parse(raw));
+    } catch {}
+  }, []);
+  const save = (next: UserItem[]) => {
+    setItems(next);
+    try { localStorage.setItem("praga.userProducts", JSON.stringify(next)); } catch {}
+  };
+  return { items, save };
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
