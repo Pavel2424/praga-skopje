@@ -203,6 +203,11 @@ function Home() {
         </div>
       </section>
 
+      {/* Catalog gallery */}
+      <CatalogSection />
+
+
+
       {/* Why us */}
       <section id="why" className="border-y border-border bg-secondary text-secondary-foreground">
         <div className="mx-auto max-w-7xl px-4 py-20">
