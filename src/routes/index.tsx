@@ -51,6 +51,27 @@ function useUserProducts() {
   return { items, save };
 }
 
+function useHiddenBuiltins() {
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("praga.hiddenCatalogIds");
+      if (raw) setHidden(new Set(JSON.parse(raw)));
+    } catch {}
+  }, []);
+  const hide = (id: string) => {
+    const next = new Set(hidden);
+    next.add(id);
+    setHidden(next);
+    try { localStorage.setItem("praga.hiddenCatalogIds", JSON.stringify([...next])); } catch {}
+  };
+  const reset = () => {
+    setHidden(new Set());
+    try { localStorage.removeItem("praga.hiddenCatalogIds"); } catch {}
+  };
+  return { hidden, hide, reset };
+}
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -354,6 +375,7 @@ function Home() {
 
 function CatalogSection() {
   const { items, save } = useUserProducts();
+  const { hidden, hide, reset } = useHiddenBuiltins();
   const [active, setActive] = useState<Category | "Сите">("Сите");
   const [title, setTitle] = useState("");
   const [cat, setCat] = useState<Category>("Алуминиум");
@@ -362,7 +384,9 @@ function CatalogSection() {
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   const all = [
-    ...catalogPages.map((p) => ({ ...p, id: `c-${p.url}`, builtin: true })),
+    ...catalogPages
+      .filter((p) => !hidden.has(`c-${p.url}`))
+      .map((p) => ({ ...p, id: `c-${p.url}`, builtin: true })),
     ...items.map((i) => ({ ...i, builtin: false })),
   ];
   const filtered = active === "Сите" ? all : all.filter((p) => p.category === active);
@@ -403,7 +427,7 @@ function CatalogSection() {
         </div>
 
         {/* Filters */}
-        <div className="mb-8 flex flex-wrap gap-2">
+        <div className="mb-8 flex flex-wrap items-center gap-2">
           {(["Сите", ...CATEGORIES] as const).map((c) => (
             <button
               key={c}
@@ -417,6 +441,14 @@ function CatalogSection() {
               {c}
             </button>
           ))}
+          {hidden.size > 0 && (
+            <button
+              onClick={reset}
+              className="rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary"
+            >
+              Врати избришани
+            </button>
+          )}
         </div>
 
         {/* Grid */}
@@ -433,11 +465,16 @@ function CatalogSection() {
                   <div className="truncate text-sm font-bold">{p.title}</div>
                   <div className="text-xs uppercase tracking-wider text-primary">{p.category}</div>
                 </div>
-                {!p.builtin && (
-                  <button onClick={() => remove(p.id)} aria-label="Избриши" className="rounded-md border border-border p-2 text-muted-foreground hover:border-destructive hover:text-destructive">
-                    <Trash2 className="size-4" />
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    if (p.builtin) hide(p.id);
+                    else save(items.filter((i) => i.id !== p.id));
+                  }}
+                  aria-label="Избриши"
+                  className="rounded-md border border-border p-2 text-muted-foreground hover:border-destructive hover:text-destructive"
+                >
+                  <Trash2 className="size-4" />
+                </button>
               </div>
             </div>
           ))}
