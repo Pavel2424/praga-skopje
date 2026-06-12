@@ -103,10 +103,12 @@ function Home() {
           </a>
           <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
             <a href="#categories" className="hover:text-primary">Производи</a>
+            <a href="#catalog" className="hover:text-primary">Каталог</a>
             <a href="#about" className="hover:text-primary">За нас</a>
             <a href="#why" className="hover:text-primary">Зошто Praga</a>
             <a href="#contact" className="hover:text-primary">Контакт</a>
           </nav>
+
           <a href="#contact" className="hidden rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-95 md:inline-flex">
             Побарај понуда
           </a>
